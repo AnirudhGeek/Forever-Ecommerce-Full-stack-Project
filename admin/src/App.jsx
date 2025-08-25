@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./components/Navbar.jsx";
-import Sidebar from "./components/sidebar.jsx";
+import Sidebar from "./components/Sidebar.jsx";
 import { Route, Routes } from "react-router-dom";
 import Add from "./pages/Add.jsx";
 import List from "./pages/List.jsx";
