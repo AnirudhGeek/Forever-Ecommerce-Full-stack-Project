@@ -4,7 +4,7 @@ import axios from "axios";
 import { backendUrl } from "../App";
 import { toast } from "react-toastify";
 
-const Add = ({ token }) => {
+const Add = ({ token, setToken }) => {
   const [image1, setImage1] = useState(false);
   const [image2, setImage2] = useState(false);
   const [image3, setImage3] = useState(false);
@@ -40,24 +40,28 @@ const Add = ({ token }) => {
       const response = await axios.post(
         backendUrl + "/api/product/add",
         formData,
-        { headers: { token } }
+        { headers: { token } },
       );
       // console.log(response.data);
-      if(response.data.success===true){
-        toast.success(response.data.message)
-        setName('')
-        setDescription('')
-        setImage1(false)
-        setImage2(false)
-        setImage3(false)
-        setImage4(false)
-        setPrice("")
-      }else{
-        toast.error(response.data.message)
+      if (response.data.success === true) {
+        toast.success(response.data.message);
+        setName("");
+        setDescription("");
+        setImage1(false);
+        setImage2(false);
+        setImage3(false);
+        setImage4(false);
+        setPrice("");
+      } else {
+        toast.error(response.data.message);
+        const msg = (response.data.message || "").toLowerCase();
+        if (msg.includes("not authorized") || msg.includes("jwt")) {
+          setToken && setToken("");
+        }
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.message)
+      toast.error(error.message);
     }
   };
 
@@ -188,7 +192,7 @@ const Add = ({ token }) => {
               setSizes((prev) =>
                 prev.includes("S")
                   ? prev.filter((item) => item !== "S")
-                  : [...prev, "S"]
+                  : [...prev, "S"],
               )
             }
           >
@@ -205,7 +209,7 @@ const Add = ({ token }) => {
               setSizes((prev) =>
                 prev.includes("M")
                   ? prev.filter((item) => item !== "M")
-                  : [...prev, "M"]
+                  : [...prev, "M"],
               )
             }
           >
@@ -222,7 +226,7 @@ const Add = ({ token }) => {
               setSizes((prev) =>
                 prev.includes("L")
                   ? prev.filter((item) => item !== "L")
-                  : [...prev, "L"]
+                  : [...prev, "L"],
               )
             }
           >
@@ -239,7 +243,7 @@ const Add = ({ token }) => {
               setSizes((prev) =>
                 prev.includes("XL")
                   ? prev.filter((item) => item !== "XL")
-                  : [...prev, "XL"]
+                  : [...prev, "XL"],
               )
             }
           >
@@ -256,7 +260,7 @@ const Add = ({ token }) => {
               setSizes((prev) =>
                 prev.includes("XXL")
                   ? prev.filter((item) => item !== "XXL")
-                  : [...prev, "XXL"]
+                  : [...prev, "XXL"],
               )
             }
           >

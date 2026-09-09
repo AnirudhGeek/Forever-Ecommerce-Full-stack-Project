@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Title from "../components/Title";
 import CartTotal from "../components/CartTotal";
 import { assets } from "../assets/frontend_assets/assets";
@@ -18,6 +18,13 @@ const PlaceOrder = () => {
     delivery_fee,
     products,
   } = useContext(ShopContext);
+
+  useEffect(() => {
+    if (!token) {
+      toast.error("Please login to proceed to checkout");
+      navigate("/login");
+    }
+  }, [token]);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -47,7 +54,7 @@ const PlaceOrder = () => {
           if (cartItems[items][item] > 0) {
             //it means that product have been added to the cart and the quantity is greateer than 0
             const itemInfo = structuredClone(
-              products.find((product) => product._id === items) //using this structuredClone we can create 1 copy of any object in different variable
+              products.find((product) => product._id === items), //using this structuredClone we can create 1 copy of any object in different variable
             );
             if (itemInfo) {
               itemInfo.size = item;
@@ -65,27 +72,30 @@ const PlaceOrder = () => {
       };
 
       switch (method) {
-
         //API calls for COD
         case "cod":
-          const response = await axios.post(backendUrl+'/api/order/place',orderData,{headers:{token}})
+          const response = await axios.post(
+            backendUrl + "/api/order/place",
+            orderData,
+            { headers: { token } },
+          );
           // console.log(response.data)
-          if(response.data.success){
+          if (response.data.success) {
             //it will clear the cart data and we'll navigate to the orders page
-            setCartItems({})
-            navigate('/orders')
-          }else{
-            toast.error(response.data.message)
+            setCartItems({});
+            navigate("/orders");
+          } else {
+            toast.error(response.data.message);
           }
           break;
 
-        case 'stripe': {
+        case "stripe": {
           const response = await axios.post(
             `${backendUrl}/api/order/stripe`,
             orderData,
-            { headers: { token } }
+            { headers: { token } },
           );
-          console.log(response.data)
+          console.log(response.data);
 
           if (response.data.success) {
             const { session_url } = response.data;
@@ -100,8 +110,8 @@ const PlaceOrder = () => {
           break;
       }
     } catch (error) {
-      console.log(error)
-      toast.error(error.message)
+      console.log(error);
+      toast.error(error.message);
     }
   };
 

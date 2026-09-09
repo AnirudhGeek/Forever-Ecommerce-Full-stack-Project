@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { backendUrl, currency } from "../App";
 import { toast } from "react-toastify";
 
-const List = ({ token }) => {
+const List = ({ token, setToken }) => {
   const [list, setList] = useState([]);
 
   const fetchList = async () => {
@@ -26,17 +26,21 @@ const List = ({ token }) => {
       const response = await axios.post(
         backendUrl + "/api/product/remove",
         { id },
-        { headers: { token } }
+        { headers: { token } },
       );
       if (response.data.success === true) {
         toast.success(response.data.message);
         await fetchList();
       } else {
         toast.error(response.data.message);
+        const msg = (response.data.message || "").toLowerCase();
+        if (msg.includes("not authorized") || msg.includes("jwt")) {
+          setToken && setToken("");
+        }
       }
-    } catch {
+    } catch (error) {
       console.log(error);
-      toast.error(response.data.message);
+      toast.error(error.message);
     }
   };
 

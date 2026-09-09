@@ -45,11 +45,22 @@ const ShopContextProvider = (props) => {
     if (token) {
       // console.log("Sending request with token:", token);
       try {
-        await axios.post(
+        const response = await axios.post(
           backendUrl + "/api/cart/add",
           { itemId, size },
-          { headers: { token } }
+          { headers: { token } },
         );
+        if (!response.data.success) {
+          const msg = (response.data.message || "").toLowerCase();
+          if (
+            msg.includes("not authorized") ||
+            msg.includes("jwt") ||
+            msg.includes("token")
+          ) {
+            logout();
+          }
+          toast.error(response.data.message);
+        }
       } catch (error) {
         console.log(error);
         toast.error(error.message);
@@ -77,19 +88,37 @@ const ShopContextProvider = (props) => {
     let cartData = structuredClone(cartItems);
     cartData[itemId][size] = quantity;
     setCartItems(cartData);
-    if(token){
+    if (token) {
       try {
-        await axios.post(backendUrl+'/api/cart/update',{itemId,size,quantity},{headers:{token}})
+        const response = await axios.post(
+          backendUrl + "/api/cart/update",
+          { itemId, size, quantity },
+          { headers: { token } },
+        );
+        if (!response.data.success) {
+          const msg = (response.data.message || "").toLowerCase();
+          if (
+            msg.includes("not authorized") ||
+            msg.includes("jwt") ||
+            msg.includes("token")
+          ) {
+            logout();
+          }
+          toast.error(response.data.message);
+        }
       } catch (error) {
-        console.log(error)
-        toast.error(error.message)
+        console.log(error);
+        toast.error(error.message);
       }
     }
   };
 
-  // useEffect(() => {
-  //   // console.log(cartItems);
-  // }, [cartItems]);
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    setCartItems({});
+    navigate("/login");
+  };
 
   const getCartAmount = () => {
     let totalAmount = 0;
@@ -109,7 +138,6 @@ const ShopContextProvider = (props) => {
   const getProductsData = async () => {
     try {
       const response = await axios.get(backendUrl + "/api/product/list");
-      // console.log(response.data)
       if (response.data.success) {
         setProducts(response.data.products);
       } else {
@@ -121,29 +149,46 @@ const ShopContextProvider = (props) => {
     }
   };
 
-  const getUserCart = async(token)=>{
+  const getUserCart = async (userToken) => {
     try {
-      const response = await axios.post(backendUrl+'/api/cart/get',{},{headers:{token}})
-      if(response.data.success){
-        setCartItems(response.data.cartData)
+      const response = await axios.post(
+        backendUrl + "/api/cart/get",
+        {},
+        { headers: { token: userToken } },
+      );
+      if (response.data.success) {
+        setCartItems(response.data.cartData);
+      } else {
+        const msg = (response.data.message || "").toLowerCase();
+        if (
+          msg.includes("not authorized") ||
+          msg.includes("jwt") ||
+          msg.includes("token")
+        ) {
+          localStorage.removeItem("token");
+          setToken("");
+          setCartItems({});
+        }
       }
     } catch (error) {
-      console.log(error)
-      toast.error(error.message)
+      console.log(error);
+      toast.error(error.message);
     }
-  } 
+  };
 
   useEffect(() => {
     getProductsData();
   }, []);
 
   useEffect(() => {
-    if (!token && localStorage.getItem("token")) {
-      //if token is not available and in localstorage token is available in that case we'll store the localstorage token in the token state
-      setToken(localStorage.getItem("token"));
-      getUserCart(localStorage.getItem("token"))
+    const savedToken = localStorage.getItem("token");
+    if (savedToken && savedToken !== "undefined" && savedToken !== "null") {
+      setToken(savedToken);
+      getUserCart(savedToken);
+    } else if (savedToken) {
+      localStorage.removeItem("token");
     }
-  });
+  }, []);
 
   // whenever we add variable state variable or a function within this value object then we can access it in any component using the contextAPI
   const value = {
@@ -164,6 +209,7 @@ const ShopContextProvider = (props) => {
     backendUrl,
     setToken,
     token,
+    logout,
   };
 
   return (

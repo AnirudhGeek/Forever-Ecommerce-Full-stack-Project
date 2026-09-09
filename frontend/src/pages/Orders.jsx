@@ -8,7 +8,7 @@ import axios, { all } from "axios";
 import { toast } from "react-toastify";
 
 const Orders = () => {
-  const { backendUrl, token, currency } = useContext(ShopContext);
+  const { backendUrl, token, currency, navigate } = useContext(ShopContext);
 
   const [orderData, setOrderData] = useState([]);
 
@@ -21,7 +21,7 @@ const Orders = () => {
       const response = await axios.post(
         backendUrl + "/api/order/userorders",
         {},
-        { headers: { token } }
+        { headers: { token } },
       );
       if (response.data.success) {
         let allOrdersItem = [];
@@ -31,10 +31,20 @@ const Orders = () => {
             item["payment"] = order.payment;
             item["paymentMethod"] = order.paymentMethod;
             item["date"] = order.date;
-            allOrdersItem.push(item)
+            allOrdersItem.push(item);
           });
         });
-        setOrderData(allOrdersItem.reverse())
+        setOrderData(allOrdersItem.reverse());
+      } else {
+        toast.error(response.data.message);
+        const msg = (response.data.message || "").toLowerCase();
+        if (
+          msg.includes("not authorized") ||
+          msg.includes("jwt") ||
+          msg.includes("token")
+        ) {
+          navigate("/login");
+        }
       }
     } catch (error) {
       console.log(error);
@@ -43,7 +53,12 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    loadOrderData();
+    if (!token) {
+      toast.error("Please login to view your orders");
+      navigate("/login");
+    } else {
+      loadOrderData();
+    }
   }, [token]);
 
   return (
@@ -70,10 +85,14 @@ const Orders = () => {
                   <p>Size: {item.size}</p>
                 </div>
                 <p className="mt-1">
-                  Date: <span className="text-gray-400">{new Date(item.date).toDateString()}</span>
+                  Date:{" "}
+                  <span className="text-gray-400">
+                    {new Date(item.date).toDateString()}
+                  </span>
                 </p>
                 <p className="mt-1">
-                  Payment: <span className="text-gray-400">{item.paymentMethod}</span>
+                  Payment:{" "}
+                  <span className="text-gray-400">{item.paymentMethod}</span>
                 </p>
               </div>
             </div>
@@ -82,7 +101,10 @@ const Orders = () => {
                 <p className="min-w-2 h-2 rounded-full bg-green-500"></p>
                 <p className="text-sm md:text-base">{item.status}</p>
               </div>
-              <button onClick={loadOrderData} className="border px-4 py-2 text-sm font-medium rounded-sm">
+              <button
+                onClick={loadOrderData}
+                className="border px-4 py-2 text-sm font-medium rounded-sm"
+              >
                 Track Order
               </button>
             </div>
